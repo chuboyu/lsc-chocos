@@ -12,7 +12,7 @@ func TestUser(t *testing.T) {
 		UsersPrefix:       "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
-		MsgContentType:    sdk.CTJSON,
+		MsgContentType:    sdk.CTJSONSenML,
 		TLSVerification:   true,
 		CaFilePath:        "../ssl/ca.crt",
 	}

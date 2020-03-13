@@ -66,7 +66,7 @@ func NewClient(conf Config) (*Client, error) {
 		UsersPrefix:       conf.UsersPrefix,
 		ThingsPrefix:      conf.ThingsPrefix,
 		HTTPAdapterPrefix: conf.HTTPAdapterPrefix,
-		MsgContentType:    sdk.CTJSON,
+		MsgContentType:    conf.MsgContentType,
 		TLSVerification:   conf.TLSVerification,
 	}
 	if conf.TLSVerification {
