@@ -16,7 +16,7 @@ func TestProvision(t *testing.T) {
 		TLSVerification:   true,
 		CaFilePath:        "../ssl/ca.crt",
 	}
-	p, err := NewProvision(provConf)
+	p, err := NewClient(provConf)
 	result, err := p.Version()
 	if err != nil {
 		t.Errorf("%e", err)

@@ -3,16 +3,45 @@ package provision
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 )
 
-// Provision controls channels and things
-type Provision struct {
-	mfxSDK    sdk.SDK
-	userToken string
+// Provision interface contains operation needed for provisioning
+type Provision interface {
+	// Initialize sets up the provision
+	Initialize() error
+
+	// Set User sets the user
+	SetUser(user sdk.User) error
+
+	// UpdateUserToken updates the user token
+	UpdateUserToken() error
+
+	// CreateGroup creates a group of Things and Channels
+	CreateGroup(thingsData interface{}, channelsData interface{}) error
+
+	// GetAllThingIDs retrieves all the thing ids for a given channel
+	GetThingIDs(channelID string) ([]string, error)
+
+	// GetAllChannelIDs retrieves all the channel ids for a given thing
+	GetChannelIDs(thingID string) ([]string, error)
+
+	// RemoveAll deletes everything corresponding to user from mainflux
+	RemoveAll()
+}
+
+// Client controls channels and things
+type Client struct {
+	MfxSDK    sdk.SDK
+	UserToken string
+	User      sdk.User
+	Things    []sdk.Thing
+	Channels  []sdk.Channel
+	Groups    []string
 }
 
 //Config contains provision configs
@@ -28,8 +57,8 @@ type Config struct {
 	CaFilePath        string
 }
 
-// NewProvision creates provision with http
-func NewProvision(conf Config) (*Provision, error) {
+// NewClient creates provision with http
+func NewClient(conf Config) (*Client, error) {
 	sdkConf := sdk.Config{
 		BaseURL:           conf.BaseURL,
 		ReaderURL:         conf.ReaderURL,
@@ -55,13 +84,17 @@ func NewProvision(conf Config) (*Provision, error) {
 			},
 		}
 		mfxSDK := sdk.NewSDKWithClient(sdkConf, client)
-		return &Provision{mfxSDK: mfxSDK, userToken: ""}, nil
+		return &Client{MfxSDK: mfxSDK, UserToken: ""}, nil
 	}
 	mfxSDK := sdk.NewSDK(sdkConf)
-	return &Provision{mfxSDK: mfxSDK, userToken: ""}, nil
+	return &Client{MfxSDK: mfxSDK, UserToken: ""}, nil
 }
 
 //Version gets the provision version
-func (p *Provision) Version() (string, error) {
-	return p.mfxSDK.Version()
+func (p *Client) Version() (string, error) {
+	version, err := p.MfxSDK.Version()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("mainflux version: %s", version), nil
 }
