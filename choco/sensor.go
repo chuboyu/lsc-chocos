@@ -29,8 +29,14 @@ func (s *sensorBuffer) UpdateData(data SensorData) {
 	}
 }
 
+// Snapshot returns the latest observed numbers
+func (s *sensorBuffer) Snapshot() SensorData {
+	return s.Data
+}
+
 // Sensor consist of
 type Sensor struct {
+	Name       string
 	Buffer     sensorBuffer
 	SensorFunc SensorFunc
 	Period     time.Duration

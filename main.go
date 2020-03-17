@@ -35,11 +35,13 @@ func main() {
 		}),
 		Period: time.Second,
 	}
-	ch.Build(sdk.Thing{}, locSensor)
+	ch.Build(sdk.Thing{}, []choco.Sensor{locSensor})
 	go func() {
 		ch.Run()
-		time.Sleep(2 * time.Second)
+		time.Sleep(3 * time.Second)
 		ch.Stop()
+
 	}()
 	ch.Observe()
+
 }
