@@ -34,22 +34,12 @@ func TestCreatGroup(t *testing.T) {
 		if err != nil {
 			t.Error("Error when calling Client.RemoveAll()")
 		}
-		err = c.CreateGroup(testCase.numThings, testCase.numChannels)
+		thingIDs, channelIDs, err := c.CreateGroup(testCase.numThings, testCase.numChannels)
 		if err != nil {
 			t.Errorf("Error Creating Group")
 		}
-
-		thingIDs, err := c.GetThingIDs("")
-		if err != nil {
-			t.Errorf("Error when retrieving things: %s", err.Error())
-		}
 		if len(thingIDs) != testCase.numThings {
 			t.Errorf("Number of things incorrect: expect %d, exist %d", testCase.numThings, len(thingIDs))
-		}
-
-		channelIDs, err := c.GetChannelIDs("")
-		if err != nil {
-			t.Errorf("Error when retrieving channels: %s", err.Error())
 		}
 		if len(channelIDs) != testCase.numChannels {
 			t.Errorf("Number of channels incorrect: expect %d, exist %d", testCase.numChannels, len(channelIDs))

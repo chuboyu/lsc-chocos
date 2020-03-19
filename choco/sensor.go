@@ -48,7 +48,7 @@ func (s *SensorBuffer) UpdateData(data SensorData) {
 
 // Snapshot returns the latest observed numbers
 func (s *SensorBuffer) Snapshot() SensorData {
-	return s.ringBuffer.Value.(sensorBufferNode).SensorData
+	return s.ringBuffer.Value.(*sensorBufferNode).SensorData
 }
 
 // DumpSenML dumps all the data in the buffer into senml json

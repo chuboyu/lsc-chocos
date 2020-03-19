@@ -32,6 +32,7 @@ func TestChoco(t *testing.T) {
 			return data
 		}),
 		Period: time.Second,
+		Buffer: NewSensorBuffer(5),
 	}
 	speedSensor := Sensor{
 		Name: "speed",
@@ -41,6 +42,7 @@ func TestChoco(t *testing.T) {
 			return data
 		}),
 		Period: 100 * time.Millisecond,
+		Buffer: NewSensorBuffer(5),
 	}
 
 	sensorList := []Sensor{locSensor, speedSensor}

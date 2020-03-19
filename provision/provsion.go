@@ -22,7 +22,7 @@ type Provision interface {
 	UpdateUserToken() error
 
 	// CreateGroup creates a group of Things and Channels
-	CreateGroup(thingsData interface{}, channelsData interface{}) error
+	CreateGroup(thingsData interface{}, channelsData interface{}) ([]string, []string, error)
 
 	// GetAllThingIDs retrieves all the thing ids for a given channel
 	GetThingIDs(channelID string) ([]string, error)

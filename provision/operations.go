@@ -8,22 +8,34 @@ import (
 )
 
 // CreateGroup creates a group of fully connected biparted Things and Channels
-func (c *Client) CreateGroup(thingsData interface{}, channelsData interface{}) error {
+func (c *Client) CreateGroup(thingsData interface{}, channelsData interface{}) ([]string, []string, error) {
 	groupUUID, err := uuid.NewV4()
 	if err != nil {
-		return fmt.Errorf("generating groupID failed: %s", err.Error())
+		return []string{}, []string{}, fmt.Errorf("generating groupID failed: %s", err.Error())
 	}
 	groupID := groupUUID.String()
 	c.Groups = append(c.Groups, groupID)
 
 	things := buildThings(thingsData, groupID)
-	c.MfxSDK.CreateThings(things, c.UserToken)
+	things, err = c.MfxSDK.CreateThings(things, c.UserToken)
+	if err != nil {
+		return []string{}, []string{}, fmt.Errorf("SDK.CreateThings Failed: %w", err)
+	}
 
 	channels := buildChannels(channelsData, groupID)
-	c.MfxSDK.CreateChannels(channels, c.UserToken)
+	channels, err = c.MfxSDK.CreateChannels(channels, c.UserToken)
+	if err != nil {
+		return []string{}, []string{}, fmt.Errorf("SDK.CreateChannels Failed: %w", err)
+	}
 
-	thingIDs, _ := c.GetThingIDs("")
-	channelIDs, _ := c.GetChannelIDs("")
+	thingIDs := make([]string, len(things))
+	for i, thing := range things {
+		thingIDs[i] = thing.ID
+	}
+	channelIDs := make([]string, len(channels))
+	for i, channel := range channels {
+		channelIDs[i] = channel.ID
+	}
 
 	connections := sdk.ConnectionIDs{
 		ChannelIDs: channelIDs,
@@ -32,10 +44,10 @@ func (c *Client) CreateGroup(thingsData interface{}, channelsData interface{}) e
 
 	err = c.MfxSDK.Connect(connections, c.UserToken)
 	if err != nil {
-		return err
+		return []string{}, []string{}, err
 	}
 
-	return nil
+	return thingIDs, channelIDs, nil
 }
 
 // GetThingIDs gets all the thingIDs
