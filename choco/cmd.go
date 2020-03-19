@@ -76,7 +76,6 @@ func (c *lscChoco) SendStatus() error {
 	}
 	for _, chanID := range c.channelIDs {
 		for _, senMLStr := range senMLStrs {
-			fmt.Printf(senMLStr)
 			err = c.client.MfxSDK.SendMessage(chanID, senMLStr, c.thingToken)
 			if err != nil {
 				return fmt.Errorf("Error sending message: %w", err)
