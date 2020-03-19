@@ -1,7 +1,6 @@
 package choco
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -48,6 +47,19 @@ func (c *lscChoco) Observe() map[string]SensorData {
 	return result
 }
 
+// SenML returns the snapshot in SenML Strings
+func (c *lscChoco) SenML() ([]string, error) {
+	data := make([]string, len(c.sensors))
+	var err error
+	for i, sensor := range c.sensors {
+		data[i], err = sensor.SenML()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return data, nil
+}
+
 // Observe prints the status of sensor
 func (c *lscChoco) ObserveUntil() {
 	for {
@@ -58,21 +70,17 @@ func (c *lscChoco) ObserveUntil() {
 
 // SendStatus updates choco status to server
 func (c *lscChoco) SendStatus() error {
-	data := map[string]interface{}{}
-	data["name"] = c.thing.Name
-	data["id"] = c.thing.ID
-	data["ts"] = time.Now().UnixNano()
-	data["observe"] = c.Observe()
-	result, err := json.Marshal(data)
+	senMLStrs, err := c.SenML()
 	if err != nil {
-		return fmt.Errorf("Json Marshal error: %w", err)
+		return err
 	}
-	resultStr := string(result)
 	for _, chanID := range c.channelIDs {
-		fmt.Printf("%s, %s, %s\n", chanID, resultStr, c.thingToken)
-		err = c.client.MfxSDK.SendMessage(chanID, resultStr, c.thingToken)
-		if err != nil {
-			return fmt.Errorf("Error sending message: %w", err)
+		for _, senMLStr := range senMLStrs {
+			fmt.Printf(senMLStr)
+			err = c.client.MfxSDK.SendMessage(chanID, senMLStr, c.thingToken)
+			if err != nil {
+				return fmt.Errorf("Error sending message: %w", err)
+			}
 		}
 	}
 	return nil

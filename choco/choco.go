@@ -24,6 +24,9 @@ type Choco interface {
 	// Observe returns the snapshots of sensors
 	Observe() map[string]SensorData
 
+	// SenML returns the current snapshot in SenML string
+	SenML() ([]string, error)
+
 	// ObserveUntil continuously observe the status of Choco
 	ObserveUntil()
 
