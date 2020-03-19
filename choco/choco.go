@@ -13,7 +13,7 @@ var _ Choco = (*lscChoco)(nil)
 // Choco is an interface that continuously shooting statuses
 type Choco interface {
 	// Build builds up the Choco
-	Build(sdk.Thing, []Sensor)
+	Build(sdk.Thing, []Sensor, []string)
 
 	// Run starts the Choco
 	Run()
@@ -27,9 +27,11 @@ type Choco interface {
 	// ObserveUntil continuously observe the status of Choco
 	ObserveUntil()
 
+	// SendStatus updates choco status to server
+	SendStatus() error
+
 	/*
-		// UpdateStatus forces the updating of information
-		UpdateStatus() error
+		UpdateUntil()
 
 		// TearDown destroys the choco
 		TearDown()
@@ -45,7 +47,7 @@ type Status struct {
 type lscChoco struct {
 	thing      sdk.Thing
 	thingToken string
-	channels   []sdk.Channel
+	channelIDs []string
 	client     *provision.Client
 	status     Status
 	sensors    []Sensor

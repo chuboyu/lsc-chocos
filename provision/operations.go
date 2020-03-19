@@ -32,7 +32,7 @@ func (c *Client) CreateGroup(thingsData interface{}, channelsData interface{}) e
 
 	err = c.MfxSDK.Connect(connections, c.UserToken)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return nil

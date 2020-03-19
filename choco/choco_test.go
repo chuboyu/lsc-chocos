@@ -40,11 +40,11 @@ func TestChoco(t *testing.T) {
 			data["speed"] = rand.Float64()
 			return data
 		}),
-		Period: time.Millisecond,
+		Period: 100 * time.Millisecond,
 	}
 
 	sensorList := []Sensor{locSensor, speedSensor}
-	choco.Build(sdk.Thing{}, sensorList)
+	choco.Build(sdk.Thing{}, sensorList, []string{})
 	choco.Run()
 	time.Sleep(time.Second)
 	t.Logf("%+v", choco.Observe())
