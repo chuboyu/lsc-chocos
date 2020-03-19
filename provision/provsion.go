@@ -90,6 +90,20 @@ func NewClient(conf Config) (*Client, error) {
 	return &Client{MfxSDK: mfxSDK, UserToken: ""}, nil
 }
 
+// ConfigFromFile creates provision config from file (currently no use)
+func ConfigFromFile(filePath string) Config {
+	provConf := Config{
+		BaseURL:           "https://localhost",
+		UsersPrefix:       "",
+		ThingsPrefix:      "",
+		HTTPAdapterPrefix: "http",
+		MsgContentType:    sdk.CTJSONSenML,
+		TLSVerification:   true,
+		CaFilePath:        "ssl/ca.crt",
+	}
+	return provConf
+}
+
 //Version gets the provision version
 func (p *Client) Version() (string, error) {
 	version, err := p.MfxSDK.Version()
