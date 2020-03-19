@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/lsc-chocos/choco"
@@ -44,14 +45,17 @@ func main() {
 		ch.Run()
 		chocoList = append(chocoList, ch)
 	}
-
 	time.Sleep(time.Second)
 	for _, ch := range chocoList {
-		ch.Stop()
-		err := ch.SendStatus()
-		if err != nil {
-			fmt.Printf("%s\n", err.Error())
-			os.Exit(1)
-		}
+		go func(cho choco.Choco) {
+			for {
+				cho.SendStatus()
+				time.Sleep(time.Second)
+			}
+		}(ch)
 	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	wg.Wait()
 }
