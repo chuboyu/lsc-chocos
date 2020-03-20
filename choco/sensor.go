@@ -3,6 +3,7 @@ package choco
 import (
 	"container/ring"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/lsc-chocos/choco/state"
@@ -96,9 +97,8 @@ func (s *Sensor) Run() {
 // SenML returns the sensor data in senml format
 func (s *Sensor) SenML() (string, error) {
 	jsonObj := s.Buffer.DumpSenML()
-	jsonObj[0]["bn"] = s.Name
+	jsonObj[0]["bn"] = fmt.Sprintf("%s:", s.Name)
 	jsonObj[0]["bu"] = s.Unit
-	jsonObj[0]["bt"] = float64(time.Now().UnixNano()) / float64(1e9)
 	jsonObj[0]["bver"] = 1
 
 	jsonBytes, err := json.Marshal(jsonObj)
