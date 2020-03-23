@@ -3,9 +3,11 @@ package provision
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 )
@@ -90,18 +92,27 @@ func NewClient(conf Config) (*Client, error) {
 	return &Client{MfxSDK: mfxSDK, UserToken: ""}, nil
 }
 
-// ConfigFromFile creates provision config from file (currently no use)
-func ConfigFromFile(filePath string) Config {
-	provConf := Config{
-		BaseURL:           "https://localhost",
-		UsersPrefix:       "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "http",
-		MsgContentType:    sdk.CTJSONSenML,
-		TLSVerification:   true,
-		CaFilePath:        "ssl/ca.crt",
+type fileConfig struct {
+	Provision Config   `json:"provision"`
+	User      sdk.User `json:"user"`
+}
+
+// ConfigsFromFile creates provision config from file (currently no use)
+func ConfigsFromFile(filePath string) (Config, sdk.User, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return Config{}, sdk.User{}, err
 	}
-	return provConf
+
+	decoder := json.NewDecoder(file)
+	var fileConf fileConfig
+
+	err = decoder.Decode(&fileConf)
+	if err != nil {
+		return Config{}, sdk.User{}, err
+	}
+
+	return fileConf.Provision, fileConf.User, nil
 }
 
 //Version gets the provision version

@@ -12,17 +12,16 @@ import (
 	"github.com/lsc-chocos/sim"
 )
 
-func initProvision(provConf provision.Config) *provision.Client {
+func initProvision(provConf provision.Config, user sdk.User) *provision.Client {
 	p, _ := provision.NewClient(provConf)
-	p.SetUser(sdk.User{Email: "boyu@test.com", Password: "testtest"})
+	p.SetUser(user)
 	p.UpdateUserToken()
 	return p
 }
 
 func main() {
-	pConf := provision.ConfigFromFile("")
-
-	p := initProvision(pConf)
+	pConf, user, _ := provision.ConfigsFromFile("./configs/config_dev.json")
+	p := initProvision(pConf, user)
 	thingIDs, channelIDs, err := p.CreateGroup(1, 1)
 	if err != nil {
 		fmt.Printf(err.Error())

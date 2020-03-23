@@ -2,22 +2,12 @@ package provision
 
 import (
 	"testing"
-
-	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 )
 
 func TestCreatGroup(t *testing.T) {
-	provConf := Config{
-		BaseURL:           "https://localhost",
-		UsersPrefix:       "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "",
-		MsgContentType:    sdk.CTJSONSenML,
-		TLSVerification:   true,
-		CaFilePath:        "../ssl/ca.crt",
-	}
+	provConf, user, _ := ConfigsFromFile("../configs/config_test.json")
 	c, _ := NewClient(provConf)
-	c.SetUser(sdk.User{Email: "boyu@test.com", Password: "testtest"})
+	c.SetUser(user)
 	t.Log("Initialization Done")
 
 	testCases := []struct {

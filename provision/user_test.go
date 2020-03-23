@@ -2,41 +2,28 @@ package provision
 
 import (
 	"testing"
-
-	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 )
 
 func TestUser(t *testing.T) {
-	provConf := Config{
-		BaseURL:           "https://localhost",
-		UsersPrefix:       "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "",
-		MsgContentType:    sdk.CTJSONSenML,
-		TLSVerification:   true,
-		CaFilePath:        "../ssl/ca.crt",
-	}
-	p, _ := NewClient(provConf)
-
 	var err error
+
+	provConf, user, _ := ConfigsFromFile("../configs/config_test.json")
+	p, _ := NewClient(provConf)
 
 	err = p.Initialize()
 	if err != nil {
 		t.Error("Initialization of Client Failed")
 	}
 
-	email := "boyu@test.com"
-	password := "testtest"
-	user := sdk.User{Email: email, Password: password}
 	err = p.SetUser(user)
 	if err != nil {
-		t.Errorf("set user failed: %s, %s", email, password)
+		t.Errorf("set user failed: %s, %s", user.Email, user.Password)
 	}
-	if email != p.User.Email {
-		t.Errorf("set user email failed: %s", email)
+	if user.Email != p.User.Email {
+		t.Errorf("set user email failed: %s", user.Email)
 	}
-	if password != p.User.Password {
-		t.Errorf("set user email failed: %s", password)
+	if user.Password != p.User.Password {
+		t.Errorf("set user email failed: %s", user.Password)
 	}
 
 	err = p.UpdateUserToken()
