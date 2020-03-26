@@ -13,14 +13,24 @@ import (
 )
 
 func initProvision(provConf provision.Config, user sdk.User) *provision.Client {
-	p, _ := provision.NewClient(provConf)
+	p, err := provision.NewClient(provConf)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+		os.Exit(1)
+	}
 	p.SetUser(user)
 	p.UpdateUserToken()
 	return p
 }
 
 func main() {
-	pConf, user, _ := provision.ConfigsFromFile("./configs/config_dev.json")
+	args := os.Args
+	configFilePath := args[1]
+	pConf, user, err := provision.ConfigsFromFile(configFilePath)
+	if err != nil {
+		fmt.Printf(err.Error())
+		os.Exit(1)
+	}
 	p := initProvision(pConf, user)
 	thingIDs, channelIDs, err := p.CreateGroup(1, 1)
 	if err != nil {
