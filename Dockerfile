@@ -1,6 +1,7 @@
 FROM golang:1.13 AS builder
 WORKDIR /go/src/github.com/lsc-chocos/
 COPY . .
+RUN go mod tidy
 RUN go build -o /exe main.go
 
 FROM golang:1.13
