@@ -60,7 +60,7 @@ type Config struct {
 }
 
 // NewClient creates provision with http
-func NewClient(conf Config) (*Client, error) {
+func NewClient(conf Config, crtFilePath string) (*Client, error) {
 	sdkConf := sdk.Config{
 		BaseURL:           conf.BaseURL,
 		ReaderURL:         conf.ReaderURL,
@@ -72,7 +72,7 @@ func NewClient(conf Config) (*Client, error) {
 		TLSVerification:   conf.TLSVerification,
 	}
 	if conf.TLSVerification {
-		caCert, err := ioutil.ReadFile(conf.CaFilePath)
+		caCert, err := ioutil.ReadFile(crtFilePath)
 		if err != nil {
 			return nil, err
 		}
@@ -98,8 +98,8 @@ type fileConfig struct {
 }
 
 // ConfigsFromFile creates provision config from file (currently no use)
-func ConfigsFromFile(filePath string) (Config, sdk.User, error) {
-	file, err := os.Open(filePath)
+func ConfigsFromFile(configFilePath string) (Config, sdk.User, error) {
+	file, err := os.Open(configFilePath)
 	if err != nil {
 		return Config{}, sdk.User{}, err
 	}

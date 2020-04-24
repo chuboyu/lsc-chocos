@@ -20,8 +20,8 @@ func initLogger() {
 	log.SetLevel(log.DebugLevel)
 }
 
-func initProvision(provConf provision.Config, user sdk.User) *provision.Client {
-	p, err := provision.NewClient(provConf)
+func initProvision(provConf provision.Config, user sdk.User, crtFilePath string) *provision.Client {
+	p, err := provision.NewClient(provConf, crtFilePath)
 	if err != nil {
 		exitWithError(err, 1, "Initializtion Provision Failed")
 	}
@@ -32,12 +32,14 @@ func initProvision(provConf provision.Config, user sdk.User) *provision.Client {
 
 func main() {
 	configFilePath := flag.String("f", "config.json", "path of the config file")
+	crtFilePath := flag.String("cacert", "mainflux-server.crt", "path of certificate file")
 	flag.Parse()
+
 	pConf, user, err := provision.ConfigsFromFile(*configFilePath)
 	if err != nil {
 		exitWithError(err, 1, "Config Read Failed")
 	}
-	p := initProvision(pConf, user)
+	p := initProvision(pConf, user, *crtFilePath)
 	thingIDs, channelIDs, err := p.CreateGroup(1, 1)
 	if err != nil {
 		exitWithError(err, 1, "Create Group Failed")

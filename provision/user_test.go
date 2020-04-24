@@ -8,7 +8,7 @@ func TestUser(t *testing.T) {
 	var err error
 
 	provConf, user, _ := ConfigsFromFile("../configs/config_test.json")
-	p, _ := NewClient(provConf)
+	p, _ := NewClient(provConf, "../ssl/mainflux-server.crt")
 
 	err = p.Initialize()
 	if err != nil {

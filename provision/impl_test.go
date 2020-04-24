@@ -1,12 +1,14 @@
 package provision
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestCreatGroup(t *testing.T) {
 	provConf, user, _ := ConfigsFromFile("../configs/config_test.json")
-	c, _ := NewClient(provConf)
+	c, err := NewClient(provConf, "../ssl/mainflux-server.crt")
+	fmt.Printf("%+v\n", err)
 	c.SetUser(user)
 	t.Log("Initialization Done")
 
