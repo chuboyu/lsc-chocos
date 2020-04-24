@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"sync"
@@ -10,13 +11,19 @@ import (
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 	"github.com/lsc-chocos/provision"
 	"github.com/lsc-chocos/sim"
+	log "github.com/sirupsen/logrus"
 )
+
+func initLogger() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel)
+}
 
 func initProvision(provConf provision.Config, user sdk.User) *provision.Client {
 	p, err := provision.NewClient(provConf)
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-		os.Exit(1)
+		exitWithError(err, 1, "Initializtion Provision Failed")
 	}
 	p.SetUser(user)
 	p.UpdateUserToken()
@@ -24,31 +31,27 @@ func initProvision(provConf provision.Config, user sdk.User) *provision.Client {
 }
 
 func main() {
-	args := os.Args
-	configFilePath := args[1]
-	pConf, user, err := provision.ConfigsFromFile(configFilePath)
+	configFilePath := flag.String("f", "config.json", "path of the config file")
+	flag.Parse()
+	pConf, user, err := provision.ConfigsFromFile(*configFilePath)
 	if err != nil {
-		fmt.Printf(err.Error())
-		os.Exit(1)
+		exitWithError(err, 1, "Config Read Failed")
 	}
 	p := initProvision(pConf, user)
 	thingIDs, channelIDs, err := p.CreateGroup(1, 1)
 	if err != nil {
-		fmt.Printf(err.Error())
-		os.Exit(1)
+		exitWithError(err, 1, "Create Group Failed")
 	}
 
 	chocoList := []choco.Choco{}
 	for _, thingID := range thingIDs {
 		ch, err := choco.NewChoco(pConf)
 		if err != nil {
-			fmt.Printf(err.Error())
-			os.Exit(1)
+			exitWithError(err, 1, "Create Choco Failed")
 		}
 		thing, err := p.MfxSDK.Thing(thingID, p.UserToken)
 		if err != nil {
-			fmt.Printf(err.Error())
-			os.Exit(1)
+			exitWithError(err, 1, fmt.Sprintf("retrieve thing failed for thingID: %s\n", thingID))
 		}
 		ch.Build(thing, sim.SensorsV0(), channelIDs)
 		ch.Run()
@@ -67,4 +70,12 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	wg.Wait()
+}
+
+func exitWithError(err error, code int, msg string) {
+	log.WithFields(log.Fields{
+		"Error": err.Error(),
+		"code":  code,
+	}).Fatal(msg)
+	os.Exit(1)
 }
