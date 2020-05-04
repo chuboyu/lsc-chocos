@@ -5,8 +5,7 @@
         "ThingsPrefix":"",
         "HTTPAdapterPrefix":"http",
         "MsgContentType":"sdk.CTJSONSenML",
-        "TLSVerification":true,
-        "CaFilePath":"/mainflux-server.crt"
+        "TLSVerification":true
     },
     "user":{
         "email":"boyu@test.com",

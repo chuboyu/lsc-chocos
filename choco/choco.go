@@ -57,8 +57,8 @@ type lscChoco struct {
 }
 
 // NewChoco re
-func NewChoco(conf provision.Config) (Choco, error) {
-	client, err := provision.NewClient(conf)
+func NewChoco(conf provision.Config, crtFilePath string) (Choco, error) {
+	client, err := provision.NewClient(conf, crtFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("client initialization failed with config %+v: %s", conf, err.Error())
 	}

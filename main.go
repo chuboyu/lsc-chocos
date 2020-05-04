@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/lsc-chocos/provision"
 	"github.com/lsc-chocos/sim"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 func initLogger() {
@@ -47,7 +49,7 @@ func main() {
 
 	chocoList := []choco.Choco{}
 	for _, thingID := range thingIDs {
-		ch, err := choco.NewChoco(pConf)
+		ch, err := choco.NewChoco(pConf, *crtFilePath)
 		if err != nil {
 			exitWithError(err, 1, "Create Choco Failed")
 		}
@@ -56,18 +58,29 @@ func main() {
 			exitWithError(err, 1, fmt.Sprintf("retrieve thing failed for thingID: %s\n", thingID))
 		}
 		ch.Build(thing, sim.SensorsV0(), channelIDs)
-		ch.Run()
 		chocoList = append(chocoList, ch)
 	}
-	time.Sleep(time.Second)
+
 	for _, ch := range chocoList {
-		go func(cho choco.Choco) {
-			for {
-				cho.SendStatus()
-				time.Sleep(time.Second)
-			}
-		}(ch)
+		ch.Run()
 	}
+
+	time.Sleep(time.Second)
+
+	sendStatuses := func(ctx context.Context, chocoList []choco.Choco) error {
+		g, ctx := errgroup.WithContext(ctx)
+		for _, ch := range chocoList {
+			g.Go(func() error {
+				for {
+					ch.SendStatus()
+					time.Sleep(time.Second)
+				}
+			})
+		}
+		return nil
+	}
+
+	err = sendStatuses(context.Background(), chocoList)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

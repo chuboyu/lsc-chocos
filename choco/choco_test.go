@@ -17,9 +17,8 @@ func TestChoco(t *testing.T) {
 		HTTPAdapterPrefix: "",
 		MsgContentType:    sdk.CTJSONSenML,
 		TLSVerification:   true,
-		CaFilePath:        "../ssl/ca.crt",
 	}
-	choco, err := NewChoco(provConf)
+	choco, err := NewChoco(provConf, "")
 	if err != nil {
 		t.Errorf("Choco initial failed: %s", err.Error())
 	}
