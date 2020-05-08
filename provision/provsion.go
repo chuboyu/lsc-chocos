@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 )
@@ -84,6 +85,7 @@ func NewClient(conf Config, crtFilePath string) (*Client, error) {
 					RootCAs: caCertPool,
 				},
 			},
+			Timeout: 5 * time.Second,
 		}
 		mfxSDK := sdk.NewSDKWithClient(sdkConf, client)
 		return &Client{MfxSDK: mfxSDK, UserToken: ""}, nil

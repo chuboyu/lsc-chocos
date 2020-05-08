@@ -1,6 +1,8 @@
 package provision
 
-import sdk "github.com/lsc-chocos/mainflux/sdk/go"
+import (
+	sdk "github.com/lsc-chocos/mainflux/sdk/go"
+)
 
 // Initialize currently does nothing
 func (c *Client) Initialize() error {
