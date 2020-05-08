@@ -33,6 +33,8 @@ func initProvision(provConf provision.Config, user sdk.User, crtFilePath string)
 }
 
 func main() {
+	initLogger()
+
 	configFilePath := flag.String("f", "config.json", "path of the config file")
 	crtFilePath := flag.String("cacert", "mainflux-server.crt", "path of certificate file")
 	flag.Parse()
@@ -41,6 +43,7 @@ func main() {
 	if err != nil {
 		exitWithError(err, 1, "Config Read Failed")
 	}
+
 	p := initProvision(pConf, user, *crtFilePath)
 	thingIDs, channelIDs, err := p.CreateGroup(1, 1)
 	if err != nil {
@@ -72,7 +75,13 @@ func main() {
 		for _, ch := range chocoList {
 			g.Go(func() error {
 				for {
-					ch.SendStatus()
+					err := ch.SendStatus()
+					if err != nil {
+						log.WithFields(log.Fields{
+							"Error": err.Error(),
+						}).Fatal("error sending messages")
+					}
+					fmt.Printf("ber")
 					time.Sleep(time.Second)
 				}
 			})
