@@ -3,10 +3,12 @@ package provision
 import (
 	"fmt"
 	"testing"
+
+	"github.com/lsc-chocos/choco"
 )
 
 func TestCreatGroup(t *testing.T) {
-	provConf, user, _ := ConfigsFromFile("../configs/config_test.json")
+	provConf, user, _ := choco.ConfigsFromFile("../configs/config_test.json")
 	c, err := NewClient(provConf, "../ssl/mainflux-server.crt")
 	fmt.Printf("%+v\n", err)
 	c.SetUser(user)

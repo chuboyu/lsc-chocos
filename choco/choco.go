@@ -1,8 +1,11 @@
 package choco
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/lsc-chocos/choco/state"
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 	"github.com/lsc-chocos/provision"
@@ -52,8 +55,38 @@ type lscChoco struct {
 	thingToken string
 	channelIDs []string
 	client     *provision.Client
+	mqttClient *MQTT.Client
 	status     Status
 	sensors    []Sensor
+}
+
+// MqttConfig is the config use for paho mqtt client
+type MqttConfig struct {
+	Broker string `json:"broker"`
+}
+
+type fileConfig struct {
+	Provision provision.Config `json:"provision"`
+	User      sdk.User         `json:"user"`
+	Mqtt      MqttConfig       `json:"mqtt"`
+}
+
+// ConfigsFromFile creates provision config from file (currently no use)
+func ConfigsFromFile(configFilePath string) (provision.Config, sdk.User, error) {
+	file, err := os.Open(configFilePath)
+	if err != nil {
+		return provision.Config{}, sdk.User{}, err
+	}
+
+	decoder := json.NewDecoder(file)
+	var fileConf fileConfig
+
+	err = decoder.Decode(&fileConf)
+	if err != nil {
+		return provision.Config{}, sdk.User{}, err
+	}
+
+	return fileConf.Provision, fileConf.User, nil
 }
 
 // NewChoco re

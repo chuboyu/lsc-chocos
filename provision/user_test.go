@@ -2,12 +2,14 @@ package provision
 
 import (
 	"testing"
+
+	"github.com/lsc-chocos/choco"
 )
 
 func TestUser(t *testing.T) {
 	var err error
 
-	provConf, user, _ := ConfigsFromFile("../configs/config_test.json")
+	provConf, user, _ := choco.ConfigsFromFile("../configs/config_test.json")
 	p, _ := NewClient(provConf, "../ssl/mainflux-server.crt")
 
 	err = p.Initialize()

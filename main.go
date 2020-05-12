@@ -39,7 +39,7 @@ func main() {
 	crtFilePath := flag.String("cacert", "mainflux-server.crt", "path of certificate file")
 	flag.Parse()
 
-	pConf, user, err := provision.ConfigsFromFile(*configFilePath)
+	pConf, user, err := choco.ConfigsFromFile(*configFilePath)
 	if err != nil {
 		exitWithError(err, 1, "Config Read Failed")
 	}
@@ -81,7 +81,6 @@ func main() {
 							"Error": err.Error(),
 						}).Fatal("error sending messages")
 					}
-					fmt.Printf("ber")
 					time.Sleep(time.Second)
 				}
 			})
