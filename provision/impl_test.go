@@ -1,17 +1,18 @@
-package provision
+package provision_test
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/lsc-chocos/choco"
+	sdk "github.com/lsc-chocos/mainflux/sdk/go"
+	"github.com/lsc-chocos/provision"
 )
 
 func TestCreatGroup(t *testing.T) {
-	provConf, user, _ := choco.ConfigsFromFile("../configs/config_test.json")
-	c, err := NewClient(provConf, "../ssl/mainflux-server.crt")
-	fmt.Printf("%+v\n", err)
-	c.SetUser(user)
+	c, err := provision.NewClient(CreateProvisionTestConfig())
+	c.SetUser(sdk.User{Email: "boyu@test.com", Password: "testtest"})
+	if err != nil {
+		t.Error("Initialization Failed", err.Error())
+	}
 	t.Log("Initialization Done")
 
 	testCases := []struct {

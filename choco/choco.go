@@ -3,6 +3,7 @@ package choco
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -65,33 +66,36 @@ type MqttConfig struct {
 	Broker string `json:"broker"`
 }
 
-type fileConfig struct {
+// Config holds the config read from file
+type Config struct {
 	Provision provision.Config `json:"provision"`
 	User      sdk.User         `json:"user"`
 	Mqtt      MqttConfig       `json:"mqtt"`
 }
 
-// ConfigsFromFile creates provision config from file (currently no use)
-func ConfigsFromFile(configFilePath string) (provision.Config, sdk.User, error) {
+// ConfigsFromFile creates provision config from file
+func ConfigsFromFile(configFilePath string) (Config, error) {
 	file, err := os.Open(configFilePath)
 	if err != nil {
-		return provision.Config{}, sdk.User{}, err
+		return Config{}, err
 	}
+	return ParseJSONConfig(file)
+}
 
-	decoder := json.NewDecoder(file)
-	var fileConf fileConfig
-
-	err = decoder.Decode(&fileConf)
+// ParseJSONConfig parses the the json from io.Reader
+func ParseJSONConfig(r io.Reader) (Config, error) {
+	decoder := json.NewDecoder(r)
+	var chocoConf Config
+	err := decoder.Decode(&chocoConf)
 	if err != nil {
-		return provision.Config{}, sdk.User{}, err
+		return Config{}, err
 	}
-
-	return fileConf.Provision, fileConf.User, nil
+	return chocoConf, nil
 }
 
 // NewChoco re
-func NewChoco(conf provision.Config, crtFilePath string) (Choco, error) {
-	client, err := provision.NewClient(conf, crtFilePath)
+func NewChoco(conf Config) (Choco, error) {
+	client, err := provision.NewClient(conf.Provision)
 	if err != nil {
 		return nil, fmt.Errorf("client initialization failed with config %+v: %s", conf, err.Error())
 	}

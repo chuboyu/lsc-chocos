@@ -1,22 +1,21 @@
-package provision
+package provision_test
 
 import (
 	"testing"
 
-	"github.com/lsc-chocos/choco"
+	sdk "github.com/lsc-chocos/mainflux/sdk/go"
+	"github.com/lsc-chocos/provision"
 )
 
 func TestUser(t *testing.T) {
-	var err error
-
-	provConf, user, _ := choco.ConfigsFromFile("../configs/config_test.json")
-	p, _ := NewClient(provConf, "../ssl/mainflux-server.crt")
+	p, err := provision.NewClient(CreateProvisionTestConfig())
 
 	err = p.Initialize()
 	if err != nil {
 		t.Error("Initialization of Client Failed")
 	}
 
+	user := sdk.User{Email: "boyu@test.com", Password: "testtest"}
 	err = p.SetUser(user)
 	if err != nil {
 		t.Errorf("set user failed: %s, %s", user.Email, user.Password)

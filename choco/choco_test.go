@@ -6,19 +6,10 @@ import (
 	"time"
 
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
-	"github.com/lsc-chocos/provision"
 )
 
 func TestChoco(t *testing.T) {
-	provConf := provision.Config{
-		BaseURL:           "https://localhost",
-		UsersPrefix:       "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "",
-		MsgContentType:    sdk.CTJSONSenML,
-		TLSVerification:   true,
-	}
-	choco, err := NewChoco(provConf, "")
+	choco, err := NewChoco(Config{})
 	if err != nil {
 		t.Errorf("Choco initial failed: %s", err.Error())
 	}

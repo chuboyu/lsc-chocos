@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -55,11 +54,11 @@ type Config struct {
 	HTTPAdapterPrefix string
 	MsgContentType    sdk.ContentType
 	TLSVerification   bool
-	CaFilePath        string
+	CaCert            []byte
 }
 
 // NewClient creates provision with http
-func NewClient(conf Config, crtFilePath string) (*Client, error) {
+func NewClient(conf Config) (*Client, error) {
 	sdkConf := sdk.Config{
 		BaseURL:           conf.BaseURL,
 		ReaderURL:         conf.ReaderURL,
@@ -71,12 +70,8 @@ func NewClient(conf Config, crtFilePath string) (*Client, error) {
 		TLSVerification:   conf.TLSVerification,
 	}
 	if conf.TLSVerification {
-		caCert, err := ioutil.ReadFile(crtFilePath)
-		if err != nil {
-			return nil, err
-		}
 		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+		caCertPool.AppendCertsFromPEM(conf.CaCert)
 		client := &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{

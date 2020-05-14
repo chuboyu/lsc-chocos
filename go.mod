@@ -7,5 +7,7 @@ require (
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/mainflux/mainflux v0.0.0-20200318185639-19503742a6bb
 	github.com/sirupsen/logrus v1.4.2
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	github.com/stretchr/testify v1.5.1
+	github.com/vektra/mockery v1.1.1 // indirect
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 )
