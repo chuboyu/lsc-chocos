@@ -64,7 +64,11 @@ func main() {
 		if err != nil {
 			exitWithError(err, 1, fmt.Sprintf("retrieve thing failed for thingID: %s\n", thingID))
 		}
-		ch.Build(thing, sim.SensorsV0(), channelIDs)
+		simSensors, err := sim.SensorsV0()
+		if err != nil {
+			exitWithError(err, 1, "Simulation Sensor create failed")
+		}
+		ch.Build(thing, simSensors, channelIDs)
 		chocoList = append(chocoList, ch)
 	}
 
