@@ -16,7 +16,7 @@ func (c *lscChoco) Build(thing sdk.Thing, sensors []Sensor, chanIDs []string) {
 	c.sensors = sensors
 	c.channelIDs = chanIDs
 	for i := range c.sensors {
-		c.sensors[i].State = state.CREATED
+		c.sensors[i].SetState(state.CREATED)
 	}
 
 }
@@ -25,7 +25,7 @@ func (c *lscChoco) Build(thing sdk.Thing, sensors []Sensor, chanIDs []string) {
 func (c *lscChoco) Run() {
 	c.status.State = state.RUNNING
 	for i := range c.sensors {
-		c.sensors[i].State = state.RUNNING
+		c.sensors[i].SetState(state.RUNNING)
 		go c.sensors[i].Run()
 	}
 }
@@ -34,7 +34,7 @@ func (c *lscChoco) Run() {
 func (c *lscChoco) Stop() {
 	c.status.State = state.STANDBY
 	for i := range c.sensors {
-		c.sensors[i].State = state.STANDBY
+		c.sensors[i].SetState(state.STANDBY)
 	}
 }
 
@@ -42,7 +42,7 @@ func (c *lscChoco) Stop() {
 func (c *lscChoco) Observe() map[string]SensorData {
 	result := map[string]SensorData{}
 	for _, sensor := range c.sensors {
-		result[sensor.Name] = sensor.Buffer.Snapshot()
+		result[sensor.Name()] = sensor.Snapshot()
 	}
 	return result
 }

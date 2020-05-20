@@ -1,7 +1,6 @@
 package choco
 
 import (
-	"container/ring"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -9,99 +8,94 @@ import (
 	"github.com/lsc-chocos/choco/state"
 )
 
-// SensorData has stored attributes
-type SensorData map[string]float64
+var _ Sensor = (*lscSensor)(nil)
 
-// SensorFunc type defines function returning the latest data
-type SensorFunc func() SensorData
+// Sensor can be runned/stopped, with functions to retrieve SenML format data
+type Sensor interface {
+	//Name gets the name of sensor
+	Name() string
 
-// sensorBufferNode is the node in sensor buffer ring
-type sensorBufferNode struct {
-	SensorData SensorData
-	Metadata   map[string]interface{}
+	//UpdateData updates the data with Sensor data
+	UpdateData(SensorData) error
+
+	//Run collects/mocks the from actual running data
+	Run()
+
+	//SenML returns the current snapshot of in SenML format
+	SenML() (string, error)
+
+	//GetState get the state of current sensor
+	GetState() (state.State, error)
+
+	//SetState sets the state of current sensor
+	SetState(state.State) error
+
+	//Snapshot returns the snapshot of Sensor
+	Snapshot() SensorData
 }
 
-// SensorBuffer is a ring buffer storing sensor data
-type SensorBuffer struct {
-	ringBuffer *ring.Ring
+type lscSensor struct {
+	name       string
+	buffer     SensorBuffer
+	sensorFunc SensorFunc
+	period     time.Duration
+	state      state.State
+	unit       string
 }
 
-// NewSensorBuffer returns an empty sensor buffer
-func NewSensorBuffer(length int) *SensorBuffer {
-	r := ring.New(length)
-	for i := 0; i < length; i++ {
-		r.Value = &sensorBufferNode{
-			SensorData: SensorData{},
-			Metadata:   map[string]interface{}{},
-		}
-		r = r.Next()
+//NewLSCSensor returns a sensor given params provided
+func NewLSCSensor(name string, buffer SensorBuffer,
+	sensorFunc SensorFunc, period time.Duration, unit string) (Sensor, error) {
+	sensor := &lscSensor{
+		name:       name,
+		buffer:     buffer,
+		sensorFunc: sensorFunc,
+		period:     period,
+		state:      state.CREATED,
+		unit:       unit,
 	}
-	return &SensorBuffer{ringBuffer: r}
+	return sensor, nil
 }
 
-// UpdateData updates sensor data to buffer
-func (s *SensorBuffer) UpdateData(data SensorData) {
-	s.ringBuffer = s.ringBuffer.Next()
-	node := s.ringBuffer.Value.(*sensorBufferNode)
-	node.SensorData = data
-	node.Metadata["ts"] = float64(time.Now().UnixNano()) / float64(1e9)
-}
-
-// Snapshot returns the latest observed numbers
-func (s *SensorBuffer) Snapshot() SensorData {
-	return s.ringBuffer.Value.(*sensorBufferNode).SensorData
-}
-
-// DumpSenML dumps all the data in the buffer into senml json
-func (s *SensorBuffer) DumpSenML() []map[string]interface{} {
-	obj := []map[string]interface{}{}
-	for i := 0; i < s.ringBuffer.Len(); i++ {
-		node := s.ringBuffer.Value.(*sensorBufferNode)
-		data := node.SensorData
-		meta := node.Metadata
-		for k, v := range data {
-			obj = append(obj, map[string]interface{}{
-				"n": k,
-				"v": v,
-				"t": meta["ts"],
-			})
-		}
-		s.ringBuffer = s.ringBuffer.Next()
-	}
-	return obj
-}
-
-// Sensor consist of
-type Sensor struct {
-	Name       string
-	Buffer     *SensorBuffer
-	SensorFunc SensorFunc
-	Period     time.Duration
-	State      state.State
-	Unit       string
+func (s *lscSensor) Name() string {
+	return s.name
 }
 
 // UpdateData updates data to Buffer
-func (s *Sensor) UpdateData(data SensorData) {
-	s.Buffer.UpdateData(data)
+func (s *lscSensor) UpdateData(data SensorData) error {
+	s.buffer.UpdateData(data)
+	return nil
 }
 
 // Run regularly updates sensorBuffer
-func (s *Sensor) Run() {
-	for s.State == state.RUNNING {
-		s.Buffer.UpdateData(s.SensorFunc())
-		time.Sleep(s.Period)
+func (s *lscSensor) Run() {
+	for s.state == state.RUNNING {
+		s.buffer.UpdateData(s.sensorFunc())
+		time.Sleep(s.period)
 	}
 }
 
 // SenML returns the sensor data in senml format
-func (s *Sensor) SenML() (string, error) {
-	jsonObj := s.Buffer.DumpSenML()
-	jsonObj[0]["bn"] = fmt.Sprintf("%s:", s.Name)
-	jsonObj[0]["bu"] = s.Unit
+func (s *lscSensor) SenML() (string, error) {
+	jsonObj := s.buffer.DumpSenML()
+	jsonObj[0]["bn"] = fmt.Sprintf("%s:", s.name)
+	jsonObj[0]["bu"] = s.unit
 	jsonObj[0]["bver"] = 1
 
 	jsonBytes, err := json.Marshal(jsonObj)
 	jsonStr := string(jsonBytes)
 	return jsonStr, err
+}
+
+func (s *lscSensor) GetState() (state.State, error) {
+	return s.state, nil
+}
+
+func (s *lscSensor) SetState(state state.State) error {
+	s.state = state
+	return nil
+}
+
+func (s *lscSensor) Snapshot() SensorData {
+	return s.buffer.Snapshot()
 }

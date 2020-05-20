@@ -1,44 +1,26 @@
-package choco
+package choco_test
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 
+	"github.com/lsc-chocos/choco"
+	"github.com/lsc-chocos/choco/mocks"
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestChoco(t *testing.T) {
-	choco, err := NewChoco(Config{})
-	if err != nil {
-		t.Errorf("Choco initial failed: %s", err.Error())
+	ch, err := choco.NewChoco(choco.Config{})
+	assert.Equal(t, err, nil, "")
+	mockSensorList := make([]choco.Sensor, 5)
+	for i := range mockSensorList {
+		ms := &mocks.Sensor{}
+		ms.On("SetState", mock.AnythingOfType("state.State")).Return(nil)
+		ms.On("Run").Return()
+		mockSensorList[i] = ms
 	}
-	locSensor := Sensor{
-		Name: "location",
-		SensorFunc: SensorFunc(func() SensorData {
-			data := SensorData{}
-			data["long"] = rand.Float64()
-			data["lat"] = rand.Float64()
-			return data
-		}),
-		Period: time.Second,
-		Buffer: NewSensorBuffer(5),
-	}
-	speedSensor := Sensor{
-		Name: "speed",
-		SensorFunc: SensorFunc(func() SensorData {
-			data := SensorData{}
-			data["speed"] = rand.Float64()
-			return data
-		}),
-		Period: 100 * time.Millisecond,
-		Buffer: NewSensorBuffer(5),
-	}
-
-	sensorList := []Sensor{locSensor, speedSensor}
-	choco.Build(sdk.Thing{}, sensorList, []string{})
-	choco.Run()
-	time.Sleep(time.Second)
-	t.Logf("%+v", choco.Observe())
-	choco.Stop()
+	ch.Build(sdk.Thing{}, mockSensorList, []string{})
+	ch.Run()
+	ch.Stop()
 }
