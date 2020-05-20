@@ -5,12 +5,6 @@ import (
 	"time"
 )
 
-// SensorData has stored attributes
-type SensorData map[string]float64
-
-// SensorFunc type defines function returning the latest data
-type SensorFunc func() SensorData
-
 // sensorBufferNode is the node in sensor buffer ring
 type sensorBufferNode struct {
 	SensorData SensorData
@@ -21,9 +15,9 @@ var _ SensorBuffer = (*lscSensorBuffer)(nil)
 
 //SensorBuffer stores a window of SensorData
 type SensorBuffer interface {
-	UpdateData(data SensorData)
-	Snapshot() SensorData
-	DumpSenML() []map[string]interface{}
+	UpdateData(data SensorData) error
+	Snapshot() (SensorData, error)
+	DumpSenML() ([]map[string]interface{}, error)
 }
 
 // SensorBuffer is a ring buffer storing sensor data
@@ -45,20 +39,21 @@ func NewSensorBuffer(length int) (SensorBuffer, error) {
 }
 
 // UpdateData updates sensor data to buffer
-func (s *lscSensorBuffer) UpdateData(data SensorData) {
+func (s *lscSensorBuffer) UpdateData(data SensorData) error {
 	s.ringBuffer = s.ringBuffer.Next()
 	node := s.ringBuffer.Value.(*sensorBufferNode)
 	node.SensorData = data
 	node.Metadata["ts"] = float64(time.Now().UnixNano()) / float64(1e9)
+	return nil
 }
 
 // Snapshot returns the latest observed numbers
-func (s *lscSensorBuffer) Snapshot() SensorData {
-	return s.ringBuffer.Value.(*sensorBufferNode).SensorData
+func (s *lscSensorBuffer) Snapshot() (SensorData, error) {
+	return s.ringBuffer.Value.(*sensorBufferNode).SensorData, nil
 }
 
 // DumpSenML dumps all the data in the buffer into senml json
-func (s *lscSensorBuffer) DumpSenML() []map[string]interface{} {
+func (s *lscSensorBuffer) DumpSenML() ([]map[string]interface{}, error) {
 	obj := []map[string]interface{}{}
 	for i := 0; i < s.ringBuffer.Len(); i++ {
 		node := s.ringBuffer.Value.(*sensorBufferNode)
@@ -73,5 +68,5 @@ func (s *lscSensorBuffer) DumpSenML() []map[string]interface{} {
 		}
 		s.ringBuffer = s.ringBuffer.Next()
 	}
-	return obj
+	return obj, nil
 }

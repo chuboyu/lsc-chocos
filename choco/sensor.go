@@ -8,6 +8,12 @@ import (
 	"github.com/lsc-chocos/choco/state"
 )
 
+// SensorData has stored attributes
+type SensorData map[string]float64
+
+// SensorFunc type defines function returning the latest data
+type SensorFunc func() SensorData
+
 var _ Sensor = (*lscSensor)(nil)
 
 // Sensor can be runned/stopped, with functions to retrieve SenML format data
@@ -25,13 +31,13 @@ type Sensor interface {
 	SenML() (string, error)
 
 	//GetState get the state of current sensor
-	GetState() (state.State, error)
+	GetState() state.State
 
 	//SetState sets the state of current sensor
-	SetState(state.State) error
+	SetState(state.State)
 
 	//Snapshot returns the snapshot of Sensor
-	Snapshot() SensorData
+	Snapshot() (SensorData, error)
 }
 
 type lscSensor struct {
@@ -63,8 +69,7 @@ func (s *lscSensor) Name() string {
 
 // UpdateData updates data to Buffer
 func (s *lscSensor) UpdateData(data SensorData) error {
-	s.buffer.UpdateData(data)
-	return nil
+	return s.buffer.UpdateData(data)
 }
 
 // Run regularly updates sensorBuffer
@@ -77,7 +82,7 @@ func (s *lscSensor) Run() {
 
 // SenML returns the sensor data in senml format
 func (s *lscSensor) SenML() (string, error) {
-	jsonObj := s.buffer.DumpSenML()
+	jsonObj, _ := s.buffer.DumpSenML()
 	jsonObj[0]["bn"] = fmt.Sprintf("%s:", s.name)
 	jsonObj[0]["bu"] = s.unit
 	jsonObj[0]["bver"] = 1
@@ -87,15 +92,14 @@ func (s *lscSensor) SenML() (string, error) {
 	return jsonStr, err
 }
 
-func (s *lscSensor) GetState() (state.State, error) {
-	return s.state, nil
+func (s *lscSensor) GetState() state.State {
+	return s.state
 }
 
-func (s *lscSensor) SetState(state state.State) error {
+func (s *lscSensor) SetState(state state.State) {
 	s.state = state
-	return nil
 }
 
-func (s *lscSensor) Snapshot() SensorData {
+func (s *lscSensor) Snapshot() (SensorData, error) {
 	return s.buffer.Snapshot()
 }

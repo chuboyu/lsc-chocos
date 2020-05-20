@@ -42,7 +42,8 @@ func (c *lscChoco) Stop() {
 func (c *lscChoco) Observe() map[string]SensorData {
 	result := map[string]SensorData{}
 	for _, sensor := range c.sensors {
-		result[sensor.Name()] = sensor.Snapshot()
+		snapshot, _ := sensor.Snapshot()
+		result[sensor.Name()] = snapshot
 	}
 	return result
 }
