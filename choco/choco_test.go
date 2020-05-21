@@ -1,6 +1,7 @@
 package choco_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/lsc-chocos/choco"
@@ -23,4 +24,14 @@ func TestChoco(t *testing.T) {
 	ch.Build(sdk.Thing{}, mockSensorList, []string{})
 	ch.Run()
 	ch.Stop()
+}
+
+func TestConfigParser(t *testing.T) {
+	file, err := os.Open("config_test.json")
+	chocoConfig, err := choco.ParseJSONConfig(file)
+	assert.Equal(t, nil, err)
+	_, err = choco.NewChoco(chocoConfig)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "testBaseURL", chocoConfig.Provision.SDKConf.BaseURL)
+	assert.Equal(t, "testemail@email.com", chocoConfig.User.Email)
 }

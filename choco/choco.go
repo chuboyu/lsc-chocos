@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/lsc-chocos/choco/state"
@@ -55,8 +54,8 @@ type lscChoco struct {
 	thing      sdk.Thing
 	thingToken string
 	channelIDs []string
-	client     *provision.Client
-	mqttClient *MQTT.Client
+	provision  provision.Provision
+	mqttClient MQTT.Client
 	status     Status
 	sensors    []Sensor
 }
@@ -73,15 +72,6 @@ type Config struct {
 	Mqtt      MqttConfig       `json:"mqtt"`
 }
 
-// ConfigsFromFile creates provision config from file
-func ConfigsFromFile(configFilePath string) (Config, error) {
-	file, err := os.Open(configFilePath)
-	if err != nil {
-		return Config{}, err
-	}
-	return ParseJSONConfig(file)
-}
-
 // ParseJSONConfig parses the the json from io.Reader
 func ParseJSONConfig(r io.Reader) (Config, error) {
 	decoder := json.NewDecoder(r)
@@ -95,9 +85,9 @@ func ParseJSONConfig(r io.Reader) (Config, error) {
 
 // NewChoco re
 func NewChoco(conf Config) (Choco, error) {
-	client, err := provision.NewClient(conf.Provision)
+	client, err := provision.NewProvision(conf.Provision)
 	if err != nil {
 		return nil, fmt.Errorf("client initialization failed with config %+v: %s", conf, err.Error())
 	}
-	return &lscChoco{client: client}, nil
+	return &lscChoco{provision: client}, nil
 }
