@@ -3,6 +3,7 @@ module github.com/lsc-chocos
 go 1.13
 
 require (
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/magiconair/properties v1.8.1
