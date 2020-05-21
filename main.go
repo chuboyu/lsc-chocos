@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/lsc-chocos/choco"
+	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 	"github.com/lsc-chocos/provision"
 	"github.com/lsc-chocos/sim"
 	log "github.com/sirupsen/logrus"
@@ -22,12 +23,12 @@ func initLogger() {
 	log.SetLevel(log.DebugLevel)
 }
 
-func initProvision(chocoConf choco.Config) *provision.Client {
-	p, err := provision.NewClient(chocoConf.Provision)
+func initProvision(provConf provision.Config, user sdk.User) provision.Provision {
+	p, err := provision.NewProvision(provConf)
 	if err != nil {
 		exitWithError(err, 1, "Initializtion Provision Failed")
 	}
-	p.SetUser(chocoConf.User)
+	p.SetUser(user)
 	p.UpdateUserToken()
 	return p
 }
@@ -39,7 +40,8 @@ func main() {
 	crtFilePath := flag.String("cacert", "mainflux-server.crt", "path of certificate file")
 	flag.Parse()
 
-	chocoConf, err := choco.ConfigsFromFile(*configFilePath)
+	file, err := os.Open(*configFilePath)
+	chocoConf, err := choco.ParseJSONConfig(file)
 	if err != nil {
 		exitWithError(err, 1, "Config Read Failed")
 	}
@@ -48,7 +50,7 @@ func main() {
 		exitWithError(err, 1, "Cert Read Failed")
 	}
 
-	p := initProvision(chocoConf)
+	p := initProvision(chocoConf.Provision, chocoConf.User)
 	thingIDs, channelIDs, err := p.CreateGroup(1, 1)
 	if err != nil {
 		exitWithError(err, 1, "Create Group Failed")
@@ -60,7 +62,7 @@ func main() {
 		if err != nil {
 			exitWithError(err, 1, "Create Choco Failed")
 		}
-		thing, err := p.MfxSDK.Thing(thingID, p.UserToken)
+		thing, err := p.GetThing(thingID)
 		if err != nil {
 			exitWithError(err, 1, fmt.Sprintf("retrieve thing failed for thingID: %s\n", thingID))
 		}

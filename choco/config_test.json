@@ -1,0 +1,18 @@
+{
+    "provision":{
+        "sdk":{
+            "BaseURL":"testBaseURL",
+            "UsersPrefix":"testUserPrefix",
+            "ReaderURL":"testReaderURL",
+            "ReaderPrefix":"testReaderPrefix",
+            "ThingsPrefix":"testThingsPrefix",
+            "HTTPAdapterPrefix":"testHTTPAdapterPrefix",
+            "MsgContentType":"testMsgContentType",
+            "TLSVerification":true
+        }
+    },
+    "user":{
+        "email":"testemail@email.com",
+        "password":"testPassword"
+    }
+}
