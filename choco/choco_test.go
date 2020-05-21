@@ -1,53 +1,37 @@
-package choco
+package choco_test
 
 import (
-	"math/rand"
+	"os"
 	"testing"
-	"time"
 
+	"github.com/lsc-chocos/choco"
+	"github.com/lsc-chocos/choco/mocks"
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
-	"github.com/lsc-chocos/provision"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestChoco(t *testing.T) {
-	provConf := provision.Config{
-		BaseURL:           "https://localhost",
-		UsersPrefix:       "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "",
-		MsgContentType:    sdk.CTJSONSenML,
-		TLSVerification:   true,
+	ch, err := choco.NewChoco(choco.Config{})
+	assert.Equal(t, err, nil, "")
+	mockSensorList := make([]choco.Sensor, 5)
+	for i := range mockSensorList {
+		ms := &mocks.Sensor{}
+		ms.On("SetState", mock.AnythingOfType("state.State")).Return(nil)
+		ms.On("Run").Return()
+		mockSensorList[i] = ms
 	}
-	choco, err := NewChoco(provConf, "")
-	if err != nil {
-		t.Errorf("Choco initial failed: %s", err.Error())
-	}
-	locSensor := Sensor{
-		Name: "location",
-		SensorFunc: SensorFunc(func() SensorData {
-			data := SensorData{}
-			data["long"] = rand.Float64()
-			data["lat"] = rand.Float64()
-			return data
-		}),
-		Period: time.Second,
-		Buffer: NewSensorBuffer(5),
-	}
-	speedSensor := Sensor{
-		Name: "speed",
-		SensorFunc: SensorFunc(func() SensorData {
-			data := SensorData{}
-			data["speed"] = rand.Float64()
-			return data
-		}),
-		Period: 100 * time.Millisecond,
-		Buffer: NewSensorBuffer(5),
-	}
+	ch.Build(sdk.Thing{}, mockSensorList, []string{})
+	ch.Run()
+	ch.Stop()
+}
 
-	sensorList := []Sensor{locSensor, speedSensor}
-	choco.Build(sdk.Thing{}, sensorList, []string{})
-	choco.Run()
-	time.Sleep(time.Second)
-	t.Logf("%+v", choco.Observe())
-	choco.Stop()
+func TestConfigParser(t *testing.T) {
+	file, err := os.Open("config_test.json")
+	chocoConfig, err := choco.ParseJSONConfig(file)
+	assert.Equal(t, nil, err)
+	_, err = choco.NewChoco(chocoConfig)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "testBaseURL", chocoConfig.Provision.SDKConf.BaseURL)
+	assert.Equal(t, "testemail@email.com", chocoConfig.User.Email)
 }

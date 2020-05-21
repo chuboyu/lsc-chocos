@@ -7,23 +7,43 @@ import (
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 )
 
+// SetUser sets user and updates usertoken
+func (c *lscProvision) SetUser(user sdk.User) error {
+	c.user = user
+	return c.UpdateUserToken()
+}
+
+// UpdateUserToken updates the user token
+func (c *lscProvision) UpdateUserToken() error {
+	token, err := c.mfxSDK.CreateToken(c.user)
+	if err != nil {
+		return err
+	}
+	c.userToken = token
+	return nil
+}
+
+func (c *lscProvision) SendMessage(channelID string, senMLMessage string, token string) error {
+	return c.mfxSDK.SendMessage(channelID, senMLMessage, token)
+}
+
 // CreateGroup creates a group of fully connected biparted Things and Channels
-func (c *Client) CreateGroup(thingsData interface{}, channelsData interface{}) ([]string, []string, error) {
+func (c *lscProvision) CreateGroup(thingsData interface{}, channelsData interface{}) ([]string, []string, error) {
 	groupUUID, err := uuid.NewV4()
 	if err != nil {
 		return []string{}, []string{}, fmt.Errorf("generating groupID failed: %s", err.Error())
 	}
 	groupID := groupUUID.String()
-	c.Groups = append(c.Groups, groupID)
+	c.groups = append(c.groups, groupID)
 
 	things := buildThings(thingsData, groupID)
-	things, err = c.MfxSDK.CreateThings(things, c.UserToken)
+	things, err = c.mfxSDK.CreateThings(things, c.userToken)
 	if err != nil {
 		return []string{}, []string{}, fmt.Errorf("SDK.CreateThings Failed: %w", err)
 	}
 
 	channels := buildChannels(channelsData, groupID)
-	channels, err = c.MfxSDK.CreateChannels(channels, c.UserToken)
+	channels, err = c.mfxSDK.CreateChannels(channels, c.userToken)
 	if err != nil {
 		return []string{}, []string{}, fmt.Errorf("SDK.CreateChannels Failed: %w", err)
 	}
@@ -42,7 +62,7 @@ func (c *Client) CreateGroup(thingsData interface{}, channelsData interface{}) (
 		ThingIDs:   thingIDs,
 	}
 
-	err = c.MfxSDK.Connect(connections, c.UserToken)
+	err = c.mfxSDK.Connect(connections, c.userToken)
 	if err != nil {
 		return []string{}, []string{}, err
 	}
@@ -50,25 +70,27 @@ func (c *Client) CreateGroup(thingsData interface{}, channelsData interface{}) (
 	return thingIDs, channelIDs, nil
 }
 
-// GetThingIDs gets all the thingIDs
-func (c *Client) GetThingIDs(channelID string) ([]string, error) {
-	var allThings []sdk.Thing
-	var thingsPage sdk.ThingsPage
-	var err error
+// GetThing gets a thing from thingID
+func (c *lscProvision) GetThing(thingID string) (sdk.Thing, error) {
+	return c.mfxSDK.Thing(thingID, c.userToken)
+}
 
+// GetThings gets all the things drom channelID
+// TODO pagination is not handled
+func (c *lscProvision) GetThings(channelID string) (sdk.ThingsPage, error) {
 	if channelID == "" {
-		thingsPage, err = c.MfxSDK.Things(c.UserToken, 0, 100, "")
-		if err != nil {
-			return nil, fmt.Errorf("Error calling SDK.Things(): %s", err.Error())
-		}
-	} else {
-		thingsPage, err = c.MfxSDK.ThingsByChannel(c.UserToken, channelID, 0, 10)
-		if err != nil {
-			return nil, fmt.Errorf("Error calling SDK.ThingsByChannel(): %s", err.Error())
-		}
+		return c.mfxSDK.Things(c.userToken, 0, 100, "")
 	}
+	return c.mfxSDK.ThingsByChannel(c.userToken, channelID, 0, 10)
+}
 
-	allThings = thingsPage.Things
+// GetThingIDs gets all the thingIDs
+func (c *lscProvision) GetThingIDs(channelID string) ([]string, error) {
+	thingsPage, err := c.GetThings(channelID)
+	if err != nil {
+		return []string{}, fmt.Errorf("Error retireving things")
+	}
+	allThings := thingsPage.Things
 	thingIDs := make([]string, len(allThings))
 	for i, thing := range allThings {
 		thingIDs[i] = thing.ID
@@ -77,18 +99,18 @@ func (c *Client) GetThingIDs(channelID string) ([]string, error) {
 }
 
 // GetChannelIDs gets all the thingIDs
-func (c *Client) GetChannelIDs(thingID string) ([]string, error) {
+func (c *lscProvision) GetChannelIDs(thingID string) ([]string, error) {
 	var allChannels []sdk.Channel
 	var channelsPage sdk.ChannelsPage
 	var err error
 
 	if thingID == "" {
-		channelsPage, err = c.MfxSDK.Channels(c.UserToken, 0, 10, "")
+		channelsPage, err = c.mfxSDK.Channels(c.userToken, 0, 10, "")
 		if err != nil {
 			return nil, fmt.Errorf("Error calling SDK.Channels(): %s", err.Error())
 		}
 	} else {
-		channelsPage, err = c.MfxSDK.ChannelsByThing(c.UserToken, thingID, 0, 100)
+		channelsPage, err = c.mfxSDK.ChannelsByThing(c.userToken, thingID, 0, 100)
 		if err != nil {
 			return nil, fmt.Errorf("Error calling SDK.Channels(): %s", err.Error())
 		}
@@ -103,17 +125,17 @@ func (c *Client) GetChannelIDs(thingID string) ([]string, error) {
 }
 
 // RemoveAll removes everything for current user
-func (c *Client) RemoveAll() error {
+func (c *lscProvision) RemoveAll() error {
 	thingsIDs, _ := c.GetThingIDs("")
 	for _, id := range thingsIDs {
-		err := c.MfxSDK.DeleteThing(id, c.UserToken)
+		err := c.mfxSDK.DeleteThing(id, c.userToken)
 		if err != nil {
 			return err
 		}
 	}
 	channelIDs, _ := c.GetChannelIDs("")
 	for _, id := range channelIDs {
-		err := c.MfxSDK.DeleteChannel(id, c.UserToken)
+		err := c.mfxSDK.DeleteChannel(id, c.userToken)
 		if err != nil {
 			return err
 		}

@@ -1,14 +1,19 @@
 {
     "provision":{
-        "BaseURL":"https://ec2-18-179-20-188.ap-northeast-1.compute.amazonaws.com",
-        "UsersPrefix":"",
-        "ThingsPrefix":"",
-        "HTTPAdapterPrefix":"http",
-        "MsgContentType":"sdk.CTJSONSenML",
-        "TLSVerification":true
+        "sdk":{
+            "BaseURL":"https://ec2-18-179-20-188.ap-northeast-1.compute.amazonaws.com",
+            "UsersPrefix":"",
+            "ThingsPrefix":"",
+            "HTTPAdapterPrefix":"http",
+            "MsgContentType":"sdk.CTJSONSenML",
+            "TLSVerification":true
+        }
     },
     "user":{
         "email":"boyu@test.com",
         "password":"testtest"
+    },
+    "mqtt":{
+        "Broker":"https://ec2-18-179-20-188.ap-northeast-1.compute.amazonaws.com:1883"
     }
 }

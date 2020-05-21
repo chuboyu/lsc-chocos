@@ -1,8 +1,11 @@
 package choco
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/lsc-chocos/choco/state"
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 	"github.com/lsc-chocos/provision"
@@ -51,16 +54,40 @@ type lscChoco struct {
 	thing      sdk.Thing
 	thingToken string
 	channelIDs []string
-	client     *provision.Client
+	provision  provision.Provision
+	mqttClient MQTT.Client
 	status     Status
 	sensors    []Sensor
 }
 
+// MqttConfig is the config use for paho mqtt client
+type MqttConfig struct {
+	Broker string `json:"broker"`
+}
+
+// Config holds the config read from file
+type Config struct {
+	Provision provision.Config `json:"provision"`
+	User      sdk.User         `json:"user"`
+	Mqtt      MqttConfig       `json:"mqtt"`
+}
+
+// ParseJSONConfig parses the the json from io.Reader
+func ParseJSONConfig(r io.Reader) (Config, error) {
+	decoder := json.NewDecoder(r)
+	var chocoConf Config
+	err := decoder.Decode(&chocoConf)
+	if err != nil {
+		return Config{}, err
+	}
+	return chocoConf, nil
+}
+
 // NewChoco re
-func NewChoco(conf provision.Config, crtFilePath string) (Choco, error) {
-	client, err := provision.NewClient(conf, crtFilePath)
+func NewChoco(conf Config) (Choco, error) {
+	client, err := provision.NewProvision(conf.Provision)
 	if err != nil {
 		return nil, fmt.Errorf("client initialization failed with config %+v: %s", conf, err.Error())
 	}
-	return &lscChoco{client: client}, nil
+	return &lscChoco{provision: client}, nil
 }

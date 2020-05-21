@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sync"
 	"time"
@@ -22,8 +23,8 @@ func initLogger() {
 	log.SetLevel(log.DebugLevel)
 }
 
-func initProvision(provConf provision.Config, user sdk.User, crtFilePath string) *provision.Client {
-	p, err := provision.NewClient(provConf, crtFilePath)
+func initProvision(provConf provision.Config, user sdk.User) provision.Provision {
+	p, err := provision.NewProvision(provConf)
 	if err != nil {
 		exitWithError(err, 1, "Initializtion Provision Failed")
 	}
@@ -39,12 +40,17 @@ func main() {
 	crtFilePath := flag.String("cacert", "mainflux-server.crt", "path of certificate file")
 	flag.Parse()
 
-	pConf, user, err := provision.ConfigsFromFile(*configFilePath)
+	file, err := os.Open(*configFilePath)
+	chocoConf, err := choco.ParseJSONConfig(file)
 	if err != nil {
 		exitWithError(err, 1, "Config Read Failed")
 	}
+	chocoConf.Provision.CaCert, err = ioutil.ReadFile(*crtFilePath)
+	if err != nil {
+		exitWithError(err, 1, "Cert Read Failed")
+	}
 
-	p := initProvision(pConf, user, *crtFilePath)
+	p := initProvision(chocoConf.Provision, chocoConf.User)
 	thingIDs, channelIDs, err := p.CreateGroup(1, 1)
 	if err != nil {
 		exitWithError(err, 1, "Create Group Failed")
@@ -52,15 +58,19 @@ func main() {
 
 	chocoList := []choco.Choco{}
 	for _, thingID := range thingIDs {
-		ch, err := choco.NewChoco(pConf, *crtFilePath)
+		ch, err := choco.NewChoco(chocoConf)
 		if err != nil {
 			exitWithError(err, 1, "Create Choco Failed")
 		}
-		thing, err := p.MfxSDK.Thing(thingID, p.UserToken)
+		thing, err := p.GetThing(thingID)
 		if err != nil {
 			exitWithError(err, 1, fmt.Sprintf("retrieve thing failed for thingID: %s\n", thingID))
 		}
-		ch.Build(thing, sim.SensorsV0(), channelIDs)
+		simSensors, err := sim.SensorsV0()
+		if err != nil {
+			exitWithError(err, 1, "Simulation Sensor create failed")
+		}
+		ch.Build(thing, simSensors, channelIDs)
 		chocoList = append(chocoList, ch)
 	}
 
@@ -81,7 +91,6 @@ func main() {
 							"Error": err.Error(),
 						}).Fatal("error sending messages")
 					}
-					fmt.Printf("ber")
 					time.Sleep(time.Second)
 				}
 			})
