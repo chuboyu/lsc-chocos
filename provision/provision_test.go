@@ -5,19 +5,50 @@ import (
 
 	sdk "github.com/lsc-chocos/mainflux/sdk/go"
 	"github.com/lsc-chocos/provision"
+	"github.com/lsc-chocos/provision/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func TestProvision(t *testing.T) {
-	p, err := provision.NewClient(CreateProvisionTestConfig())
+func CreateTestProvision() (provision.Provision, error) {
+	mockSDK := &mocks.SDK{}
+	mockSDK.On("Version").Return("testversion", nil)
+	mockSDK.On("CreateToken", mock.AnythingOfType("sdk.User")).Return("testtoken", nil)
+	mockSDK.On("CreateThings", mock.AnythingOfType("[]sdk.Thing"),
+		"testtoken").Return(
+		[]sdk.Thing{sdk.Thing{ID: "thing_1"}},
+		nil,
+	)
+	mockSDK.On("CreateChannels", mock.AnythingOfType("[]sdk.Channel"),
+		"testtoken").Return(
+		[]sdk.Channel{sdk.Channel{ID: "channel_1"}},
+		nil,
+	)
+	mockSDK.On("Connect", mock.AnythingOfType("sdk.ConnectionIDs"),
+		"testtoken").Return(nil)
 
-	_, err = p.Version()
-	if err != nil {
-		t.Errorf("%e", err)
-	}
+	return provision.NewProvisionWithSDK(mockSDK)
+}
+func TestProvision(t *testing.T) {
+	prov, err := CreateTestProvision()
+	assert.Equal(t, nil, err)
+
+	version, err := prov.Version()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "mainflux version: testversion", version)
+
+	assert.Equal(t, nil, prov.SetUser(sdk.User{}))
+	assert.Equal(t, nil, prov.UpdateUserToken())
+
+	thingIDs, channelIDs, err := prov.CreateGroup(5, 5)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, []string{"thing_1"}, thingIDs)
+	assert.Equal(t, []string{"channel_1"}, channelIDs)
 }
 
-func CreateProvisionTestConfig() provision.Config {
-	config := provision.Config{
+func CreateIntegrationTestConfig() provision.Config {
+	config := provision.Config{}
+	config.SDKConf = sdk.Config{
 		BaseURL:           "https://ec2-18-179-20-188.ap-northeast-1.compute.amazonaws.com",
 		ReaderURL:         "",
 		ReaderPrefix:      "",
@@ -26,7 +57,6 @@ func CreateProvisionTestConfig() provision.Config {
 		HTTPAdapterPrefix: "http",
 		MsgContentType:    sdk.CTJSONSenML,
 		TLSVerification:   true,
-		CaCert:            []byte(""),
 	}
 
 	config.CaCert = []byte(`-----BEGIN CERTIFICATE-----
