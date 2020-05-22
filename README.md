@@ -7,7 +7,7 @@ currently under construction.
 
 First you will need a running Mainflux service, an opensource IOT platform.
 
-You need to modify the `config files` to add the host to `BaseUrl`. 
+You need to modify the `config files` under `configs` to add the host to `BaseUrl`. 
 
 Running this program will simply create 1 thing and 1 channel on the server.
 
@@ -22,16 +22,16 @@ You will need to specify the server certificate file path in the config files.
 After that simply run
 
 ```
-    > go run main.go <config_file_path>
+    > go run main.go <config_file_path> -f <confile_file_path> -cacert <crt_file_path>
 ```
 
-There is a config file ready in `configs/config_dev.json`
+There is a config file ready in `configs/config.json`
 
 ### Docker
 
-Please see the Dockerfile for more information.
+It will use `configs/config.json` and `ssl/mainflux-server.crt`, so you may need to modify/replace them accordingly.
 
-You will need to put the server certificate in `ssl/mainflux-server.crt`
+Please see the Dockerfile for more information.
 
 To start simply run
 
@@ -39,5 +39,3 @@ To start simply run
 > docker build . -t <image_name>
 > docker run <image_name>
 ```
-
-It will use `configs/config.json` and `ssl/mainflux-server.crt`.
